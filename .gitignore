@@ -1,0 +1,19 @@
+# Ignores Visual Studio solution/project user options
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Ignores generated build/publish folders
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+bld/
+bin/
+obj/
+publish/
+
+# Ignores Visual Studio temporary files/folders
+# The .vs folder contains solution-wide settings and files locked by VS
+.vs/

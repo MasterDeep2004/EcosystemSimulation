@@ -1,0 +1,17 @@
+﻿body {
+    font-family: sans-serif;
+    text-align: center;
+    background: #101820;
+    color: #fff;
+}
+
+canvas {
+    background: #181818;
+    border: 2px solid #32cd32;
+    margin-top: 20px;
+}
+
+#status {
+    margin-top: 10px;
+    color: #aaa;
+}
