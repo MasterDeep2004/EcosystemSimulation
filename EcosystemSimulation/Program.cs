@@ -1,18 +1,19 @@
-﻿using EcosystemSimulation.Services;
+using EcosystemSimulation.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ------------------- Services -------------------
+// ---------------- Services ----------------
 builder.Services.AddSingleton<SimulationService>();
 builder.Services.AddHostedService<SimulationRunner>();
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// ------------------- CORS -------------------
+// ---------------- CORS ----------------
 builder.Services.AddCors(options =>
 {
-    options.AddDefaultPolicy(policy =>
+    options.AddPolicy("AllowFrontend", policy =>
     {
         policy.AllowAnyOrigin()
               .AllowAnyHeader()
@@ -22,28 +23,22 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// ------------------- Middleware -------------------
+// ---------------- Middleware ----------------
 
-// Enable Swagger only in Development
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Ecosystem Simulation API v1");
-    });
+    app.UseSwaggerUI();
 }
 
-// Serve static files from wwwroot
+app.UseHttpsRedirection();
+
 app.UseStaticFiles();
 
-// Enable CORS
-app.UseCors();
+app.UseRouting();
 
-// Map API controllers
+app.UseCors("AllowFrontend");
+
 app.MapControllers();
 
-// ------------------- Run -------------------
-Console.WriteLine("Backend running at http://localhost:5172");
-app.Urls.Add("http://localhost:5172");
 app.Run();
