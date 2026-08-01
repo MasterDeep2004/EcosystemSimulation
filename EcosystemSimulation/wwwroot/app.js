@@ -1,32 +1,48 @@
-﻿const canvas = document.getElementById("ecosystemCanvas");
+const canvas = document.getElementById("ecosystemCanvas");
 const ctx = canvas.getContext("2d");
+
 const status = document.getElementById("status");
 
-const evt = new EventSource("/api/simulation/stream");
+const source = new EventSource("/api/simulation/stream");
 
-evt.onopen = () => status.innerText = "Status: Running simulation...";
-
-evt.onmessage = e => {
-    const data = JSON.parse(e.data);
-
-    // Clear canvas
-    ctx.fillStyle = "#181818";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Plants
-    ctx.fillStyle = "green";
-    ctx.fillRect(50, canvas.height - data.Plants * 0.2, 100, data.Plants * 0.2);
-
-    // Herbivores
-    ctx.fillStyle = "orange";
-    ctx.fillRect(200, canvas.height - data.Herbivores * 0.5, 50, data.Herbivores * 0.5);
-
-    // Carnivores
-    ctx.fillStyle = "red";
-    ctx.fillRect(300, canvas.height - data.Carnivores * 2, 30, data.Carnivores * 2);
+source.onopen = () => {
+    status.innerText = "Simulation Running";
 };
 
-evt.onerror = () => {
-    status.innerText = "Status: Connection lost.";
-    evt.close();
+source.onmessage = event => {
+
+    const data = JSON.parse(event.data);
+
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    const baseY = 400;
+
+    drawBar(120,data.Plants*0.15, "green","Plants",data.Plants);
+
+    drawBar(400,data.Herbivores*0.4,"orange","Herbivores",data.Herbivores);
+
+    drawBar(680,data.Carnivores*2,"red","Carnivores",data.Carnivores);
+};
+
+function drawBar(x,height,color,label,value){
+
+    ctx.fillStyle=color;
+
+    ctx.fillRect(x,400-height,120,height);
+
+    ctx.fillStyle="white";
+
+    ctx.font="18px Arial";
+
+    ctx.fillText(label,x+10,430);
+
+    ctx.fillText(value,x+20,380-height);
+}
+
+source.onerror = ()=>{
+
+    status.innerText="Connection Lost";
+
+    source.close();
+
 };
