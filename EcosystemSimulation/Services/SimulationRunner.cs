@@ -1,49 +1,63 @@
-﻿using EcosystemSimulation.Models;
 using Microsoft.Extensions.Hosting;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace EcosystemSimulation.Services
 {
     public class SimulationRunner : BackgroundService
     {
         private readonly SimulationService _simulation;
-        private readonly int _delayMs = 2000;
+        private readonly ILogger<SimulationRunner> _logger;
+        private readonly IConfiguration _configuration;
 
-        public SimulationRunner(SimulationService simulation)
+        public SimulationRunner(
+            SimulationService simulation,
+            ILogger<SimulationRunner> logger,
+            IConfiguration configuration)
         {
-            _simulation = simulation ?? throw new ArgumentNullException(nameof(simulation));
+            _simulation = simulation;
+            _logger = logger;
+            _configuration = configuration;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            Console.WriteLine("[SimulationRunner] Background simulation started.");
+            _logger.LogInformation("Simulation Background Service Started.");
+
+            int delay =
+                _configuration.GetValue<int>("Simulation:GenerationDelay", 2000);
 
             while (!stoppingToken.IsCancellationRequested)
             {
                 try
                 {
                     _simulation.RunGeneration();
+
                     var best = _simulation.GetBestState();
+
                     if (best != null)
                     {
-                        Console.WriteLine($"🌱{best.Plants} 🐇{best.Herbivores} 🦁{best.Carnivores} | Fitness={best.Fitness():F2}");
+                        _logger.LogInformation(
+                            "Generation {Generation} | Plants:{Plants} Herbivores:{Herbivores} Carnivores:{Carnivores} Fitness:{Fitness:F2}",
+                            _simulation.Generation,
+                            best.Plants,
+                            best.Herbivores,
+                            best.Carnivores,
+                            best.Fitness());
                     }
+
+                    await Task.Delay(delay, stoppingToken);
+                }
+                catch (TaskCanceledException)
+                {
+                    break;
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"[SimulationRunner] Error: {ex.Message}");
+                    _logger.LogError(ex, "Simulation Runner Error");
                 }
-
-                try
-                {
-                    await Task.Delay(_delayMs, stoppingToken);
-                }
-                catch (TaskCanceledException) { break; }
             }
 
-            Console.WriteLine("[SimulationRunner] Simulation stopped.");
+            _logger.LogInformation("Simulation Background Service Stopped.");
         }
     }
 }
