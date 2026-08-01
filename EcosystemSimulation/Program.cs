@@ -2,7 +2,7 @@ using EcosystemSimulation.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ---------------- Services ----------------
+// ------------------- Services -------------------
 builder.Services.AddSingleton<SimulationService>();
 builder.Services.AddHostedService<SimulationRunner>();
 
@@ -10,10 +10,10 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// ---------------- CORS ----------------
+// ------------------- CORS -------------------
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend", policy =>
+    options.AddDefaultPolicy(policy =>
     {
         policy.AllowAnyOrigin()
               .AllowAnyHeader()
@@ -23,22 +23,30 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// ---------------- Middleware ----------------
+// ------------------- Middleware -------------------
 
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint(
+            "/swagger/v1/swagger.json",
+            "Ecosystem Simulation API v1");
+    });
 }
-
-app.UseHttpsRedirection();
 
 app.UseStaticFiles();
 
 app.UseRouting();
 
-app.UseCors("AllowFrontend");
+app.UseCors();
 
 app.MapControllers();
+
+// Default page
+app.MapFallbackToFile("index.html");
+
+// ------------------- Run -------------------
 
 app.Run();
