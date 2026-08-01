@@ -1,39 +1,71 @@
-using Microsoft.AspNetCore.Mvc;
 using EcosystemSimulation.Services;
+using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
-using System.Threading.Tasks;
 
-namespace EcosystemSimulation.Controllers
+namespace EcosystemSimulation.Controllers;
+
+[ApiController]
+[Route("api/simulation")]
+public class SimulationController : ControllerBase
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class SimulationController : ControllerBase
+    private readonly SimulationService _simulation;
+    private readonly ILogger<SimulationController> _logger;
+
+    public SimulationController(
+        SimulationService simulation,
+        ILogger<SimulationController> logger)
     {
-        private readonly SimulationService _sim;
-        public SimulationController(SimulationService sim) => _sim = sim;
-        [HttpGet("stream")]
-        public async Task Stream()
+        _simulation = simulation;
+        _logger = logger;
+    }
+
+    [HttpGet("stream")]
+    public async Task Stream()
+    {
+        Response.ContentType = "text/event-stream";
+        Response.Headers.CacheControl = "no-cache";
+
+        var token = HttpContext.RequestAborted;
+
+        while (!token.IsCancellationRequested)
         {
-            Response.Headers.Add("Content-Type", "text/event-stream");
-            Response.Headers.Add("Cache-Control", "no-cache");
-            Response.Headers.Add("Connection", "keep-alive");
+            var state = _simulation.GetBestState();
 
-            var token = HttpContext.RequestAborted;
-
-            while (!token.IsCancellationRequested)
+            if (state != null)
             {
-                var best = _sim.GetBestState();
-                if (best == null) continue;
+                await Response.WriteAsync(
+                    $"data:{JsonSerializer.Serialize(state)}\n\n",
+                    token);
 
-                var json = JsonSerializer.Serialize(best);
-
-                // Critical: flush after every write
-                await Response.WriteAsync($"data: {json}\n\n", token);
                 await Response.Body.FlushAsync(token);
-
-                await Task.Delay(1000, token);
             }
+
+            await Task.Delay(1000, token);
         }
+
+        _logger.LogInformation("SSE client disconnected.");
+    }
+
+    [HttpGet("best")]
+    public IActionResult GetBestState()
+    {
+        return Ok(_simulation.GetBestState());
+    }
+
+    [HttpGet("population")]
+    public IActionResult GetPopulation()
+    {
+        return Ok(_simulation.GetPopulation());
+    }
+
+    [HttpPost("restart")]
+    public IActionResult Restart()
+    {
+        _simulation.StartNewSimulation();
+
+        return Ok(new
+        {
+            Message = "Simulation restarted successfully."
+        });
     }
 }
-
