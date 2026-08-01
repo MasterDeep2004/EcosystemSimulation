@@ -1,17 +1,39 @@
-﻿body {
-    font-family: sans-serif;
-    text-align: center;
-    background: #101820;
-    color: #fff;
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
 }
 
-canvas {
-    background: #181818;
-    border: 2px solid #32cd32;
-    margin-top: 20px;
+body{
+    font-family:Arial,Helvetica,sans-serif;
+    background:#0f172a;
+    color:white;
 }
 
-#status {
-    margin-top: 10px;
-    color: #aaa;
+.container{
+    width:90%;
+    max-width:1100px;
+    margin:40px auto;
+    text-align:center;
+}
+
+h1{
+    margin-bottom:10px;
+}
+
+.subtitle{
+    color:#cbd5e1;
+    margin-bottom:25px;
+}
+
+canvas{
+    background:#1e293b;
+    border-radius:10px;
+    border:2px solid #22c55e;
+}
+
+#status{
+    margin-top:20px;
+    font-weight:bold;
+    color:#22c55e;
 }
