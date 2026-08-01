@@ -1,26 +1,17 @@
-﻿namespace EcosystemSimulation.Models
+public class Entity
 {
-    public enum EntityType { Plant, Herbivore, Carnivore }
+    public int Id { get; set; }
 
-    public class Entity
+    public EntityType Type { get; set; }
+
+    public int Population { get; set; }
+
+    public double GrowthRate { get; set; }
+
+    public int ConsumptionRate { get; set; }
+
+    public override string ToString()
     {
-        public int Id { get; set; }
-        public EntityType Type { get; set; }
-        public int Population { get; set; }
-        // Optional: growth rate per simulation step
-        public double GrowthRate { get; set; } = 0;
-
-        // Optional: amount consumed by other entities per step
-        public int ConsumptionRate { get; set; } = 0;
-
-        // Constructor for convenience
-        public Entity(int id, EntityType type, int population, double growthRate = 0, int consumptionRate = 0)
-        {
-            Id = id;
-            Type = type;
-            Population = population;
-            GrowthRate = growthRate;
-            ConsumptionRate = consumptionRate;
-        }
+        return $"{Type}: {Population}";
     }
 }
