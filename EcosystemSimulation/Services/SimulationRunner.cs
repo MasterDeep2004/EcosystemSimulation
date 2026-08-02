@@ -1,3 +1,4 @@
+using EcosystemSimulation.Models;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -7,24 +8,19 @@ namespace EcosystemSimulation.Services
     {
         private readonly SimulationService _simulation;
         private readonly ILogger<SimulationRunner> _logger;
-        private readonly IConfiguration _configuration;
+        private readonly int _delayMs = 2000;
 
         public SimulationRunner(
             SimulationService simulation,
-            ILogger<SimulationRunner> logger,
-            IConfiguration configuration)
+            ILogger<SimulationRunner> logger)
         {
             _simulation = simulation;
             _logger = logger;
-            _configuration = configuration;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            _logger.LogInformation("Simulation Background Service Started.");
-
-            int delay =
-                _configuration.GetValue<int>("Simulation:GenerationDelay", 2000);
+            _logger.LogInformation("Simulation Runner Started.");
 
             while (!stoppingToken.IsCancellationRequested)
             {
@@ -37,27 +33,27 @@ namespace EcosystemSimulation.Services
                     if (best != null)
                     {
                         _logger.LogInformation(
-                            "Generation {Generation} | Plants:{Plants} Herbivores:{Herbivores} Carnivores:{Carnivores} Fitness:{Fitness:F2}",
-                            _simulation.Generation,
+                            "Generation Completed | Plants:{Plants} Herbivores:{Herbivores} Carnivores:{Carnivores} Fitness:{Fitness:F2}",
                             best.Plants,
                             best.Herbivores,
                             best.Carnivores,
                             best.Fitness());
                     }
 
-                    await Task.Delay(delay, stoppingToken);
+                    await Task.Delay(_delayMs, stoppingToken);
                 }
                 catch (TaskCanceledException)
                 {
+                    _logger.LogInformation("Simulation cancelled.");
                     break;
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Simulation Runner Error");
+                    _logger.LogError(ex, "Error while running simulation.");
                 }
             }
 
-            _logger.LogInformation("Simulation Background Service Stopped.");
+            _logger.LogInformation("Simulation Runner Stopped.");
         }
     }
 }
