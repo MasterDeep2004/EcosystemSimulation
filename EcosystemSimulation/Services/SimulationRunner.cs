@@ -14,13 +14,13 @@ namespace EcosystemSimulation.Services
             SimulationService simulation,
             ILogger<SimulationRunner> logger)
         {
-            _simulation = simulation;
-            _logger = logger;
+            _simulation = simulation ?? throw new ArgumentNullException(nameof(simulation));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            _logger.LogInformation("Simulation Runner Started.");
+            _logger.LogInformation("Simulation Runner started.");
 
             while (!stoppingToken.IsCancellationRequested)
             {
@@ -33,7 +33,7 @@ namespace EcosystemSimulation.Services
                     if (best != null)
                     {
                         _logger.LogInformation(
-                            "Generation Completed | Plants:{Plants} Herbivores:{Herbivores} Carnivores:{Carnivores} Fitness:{Fitness:F2}",
+                            "Generation completed | Plants: {Plants}, Herbivores: {Herbivores}, Carnivores: {Carnivores}, Fitness: {Fitness:F2}",
                             best.Plants,
                             best.Herbivores,
                             best.Carnivores,
@@ -49,11 +49,11 @@ namespace EcosystemSimulation.Services
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Error while running simulation.");
+                    _logger.LogError(ex, "An error occurred while running the simulation.");
                 }
             }
 
-            _logger.LogInformation("Simulation Runner Stopped.");
+            _logger.LogInformation("Simulation Runner stopped.");
         }
     }
 }
