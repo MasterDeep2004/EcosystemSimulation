@@ -1,30 +1,28 @@
-﻿using EcosystemSimulation.Models;
+using EcosystemSimulation.Interfaces;
+using EcosystemSimulation.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace EcosystemSimulation.Services
 {
     /// <summary>
-    /// Runs the ecosystem simulation using
-    /// Genetic Algorithm + Lotka Volterra population model.
+    /// Executes the ecosystem simulation using a
+    /// Genetic Algorithm combined with Lotka–Volterra equations.
     /// </summary>
     public class SimulationService : ISimulationService
     {
-        private int _generationCounter = 0;
-
-        private readonly int _populationSize;
-
-        private const int TournamentSize = 3;
-
-        private const double MutationRate = 0.25;
+        private readonly ILogger<SimulationService> _logger;
+        private readonly object _lock = new();
+        private static readonly Random _rand = Random.Shared;
 
         private readonly List<SimulationState> _population = new();
 
-        private readonly object _lock = new();
+        private readonly int _populationSize;
+        private readonly int _tournamentSize;
+        private readonly double _mutationRate;
 
-        private readonly ILogger<SimulationService> _logger;
-
-        private static readonly Random _rand = Random.Shared;
+        private int _generationCounter = 0;
 
         public int Generation => _generationCounter;
 
@@ -38,6 +36,16 @@ namespace EcosystemSimulation.Services
                 configuration.GetValue<int>(
                     "Simulation:PopulationSize",
                     20);
+
+            _tournamentSize =
+                configuration.GetValue<int>(
+                    "Simulation:TournamentSize",
+                    3);
+
+            _mutationRate =
+                configuration.GetValue<double>(
+                    "Simulation:MutationRate",
+                    0.25);
 
             InitializePopulation();
         }
@@ -65,12 +73,13 @@ namespace EcosystemSimulation.Services
             }
 
             _logger.LogInformation(
-                "Initial population created with {Count} states.",
+                "Initialized simulation with {PopulationSize} ecosystem states.",
                 _populationSize);
         }
 
         /// <summary>
-        /// Calculates fitness of one ecosystem state.
+        /// Calculates the fitness of an ecosystem state.
+        /// Higher values indicate a healthier ecosystem.
         /// </summary>
         public double Fitness(SimulationState state)
         {
@@ -111,10 +120,23 @@ namespace EcosystemSimulation.Services
 
                 return 0;
             }
-        }
+                    // -----------------------------
+        // Genetic Algorithm Operations
+        // -----------------------------
+
+        private const double PlantGrowthRate = 0.15;
+        private const double PlantConsumptionRate = 0.002;
+
+        private const double HerbivoreBirthRate = 0.003;
+        private const double HerbivoreDeathRate = 0.08;
+        private const double HerbivorePredationRate = 0.002;
+
+        private const double CarnivoreBirthRate = 0.0015;
+        private const double CarnivoreDeathRate = 0.06;
 
         /// <summary>
-        /// Tournament Selection.
+        /// Tournament selection.
+        /// Chooses the fittest individual from a random subset.
         /// </summary>
         private SimulationState SelectParent()
         {
@@ -122,7 +144,7 @@ namespace EcosystemSimulation.Services
             {
                 var candidates = new List<SimulationState>();
 
-                for (int i = 0; i < TournamentSize; i++)
+                for (int i = 0; i < _tournamentSize; i++)
                 {
                     candidates.Add(
                         _population[
@@ -131,13 +153,13 @@ namespace EcosystemSimulation.Services
                 }
 
                 return candidates
-                    .OrderByDescending(Fitness)
-                    .First()
+                    .MaxBy(Fitness)!
                     .Clone();
             }
         }
+
         /// <summary>
-        /// Creates a child by combining two parents.
+        /// Creates a child using crossover between two parents.
         /// </summary>
         private SimulationState Crossover(
             SimulationState parent1,
@@ -162,27 +184,27 @@ namespace EcosystemSimulation.Services
                 Plants = Math.Max(
                     100,
                     (parent1.Plants + parent2.Plants) / 2 +
-                    _rand.Next(-30, 31)
-                ),
+                    _rand.Next(-30, 31)),
 
                 Herbivores = Math.Max(
                     50,
                     (parent1.Herbivores + parent2.Herbivores) / 2 +
-                    _rand.Next(-20, 21)
-                ),
+                    _rand.Next(-20, 21)),
 
                 Carnivores = Math.Max(
                     5,
                     (parent1.Carnivores + parent2.Carnivores) / 2 +
-                    _rand.Next(-10, 11)
-                ),
+                    _rand.Next(-10, 11)),
+
+                Generation = _generationCounter + 1,
 
                 Timestamp = DateTime.UtcNow
             };
         }
 
         /// <summary>
-        /// Applies mutation and ecosystem dynamics.
+        /// Applies mutation and updates ecosystem
+        /// using Lotka–Volterra equations.
         /// </summary>
         private void Mutate(SimulationState state)
         {
@@ -191,65 +213,87 @@ namespace EcosystemSimulation.Services
 
             try
             {
-                // ---------- Random Mutation ----------
+                // ---------------- Mutation ----------------
 
-                if (_rand.NextDouble() < MutationRate)
+                if (_rand.NextDouble() < _mutationRate)
                     state.Plants += _rand.Next(-50, 51);
 
-                if (_rand.NextDouble() < MutationRate)
+                if (_rand.NextDouble() < _mutationRate)
                     state.Herbivores += _rand.Next(-25, 26);
 
-                if (_rand.NextDouble() < MutationRate)
+                if (_rand.NextDouble() < _mutationRate)
                     state.Carnivores += _rand.Next(-10, 11);
 
-                // ---------- Lotka-Volterra Dynamics ----------
+                // ----------- Plant Growth ------------
 
-                int plantGrowth =
-                    (int)(
-                        0.15 * state.Plants -
-                        0.002 * state.Plants * state.Herbivores
-                    );
+                int plantGrowth = (int)
+                (
+                    PlantGrowthRate * state.Plants -
+                    PlantConsumptionRate *
+                    state.Plants *
+                    state.Herbivores
+                );
 
                 state.Plants += plantGrowth;
 
-                int herbivoreChange =
-                    (int)(
-                        0.003 * state.Plants * state.Herbivores -
-                        0.08 * state.Herbivores -
-                        0.002 * state.Herbivores * state.Carnivores
-                    );
+                // -------- Herbivore Dynamics --------
+
+                int herbivoreChange = (int)
+                (
+                    HerbivoreBirthRate *
+                    state.Plants *
+                    state.Herbivores -
+
+                    HerbivoreDeathRate *
+                    state.Herbivores -
+
+                    HerbivorePredationRate *
+                    state.Herbivores *
+                    state.Carnivores
+                );
 
                 state.Herbivores += herbivoreChange;
 
-                int carnivoreChange =
-                    (int)(
-                        0.0015 * state.Herbivores * state.Carnivores -
-                        0.06 * state.Carnivores
-                    );
+                // -------- Carnivore Dynamics --------
+
+                int carnivoreChange = (int)
+                (
+                    CarnivoreBirthRate *
+                    state.Herbivores *
+                    state.Carnivores -
+
+                    CarnivoreDeathRate *
+                    state.Carnivores
+                );
 
                 state.Carnivores += carnivoreChange;
 
                 // ---------- Environmental Events ----------
 
+                state.EventName = "";
+
                 if (_rand.NextDouble() < 0.05)
                 {
+                    state.Plants = (int)(state.Plants * 0.70);
+
+                    state.EventName = "Drought";
+
                     _logger.LogInformation(
                         "Environmental Event: Drought");
-
-                    state.Plants =
-                        (int)(state.Plants * 0.70);
                 }
 
                 if (_rand.NextDouble() < 0.05)
                 {
-                    _logger.LogInformation(
-                        "Environmental Event: Herbivore Boom");
-
                     state.Herbivores +=
                         _rand.Next(30, 70);
+
+                    state.EventName = "Herbivore Boom";
+
+                    _logger.LogInformation(
+                        "Environmental Event: Herbivore Boom");
                 }
 
-                // ---------- Population Constraints ----------
+                // ---------- Constraints ----------
 
                 state.Plants =
                     Math.Max(100, state.Plants);
@@ -260,7 +304,6 @@ namespace EcosystemSimulation.Services
                 state.Carnivores =
                     Math.Max(5, state.Carnivores);
 
-                // Predator population cannot exceed 40% of herbivores
                 state.Carnivores =
                     Math.Min(
                         state.Carnivores,
@@ -275,14 +318,16 @@ namespace EcosystemSimulation.Services
                     "Mutation failed.");
             }
         }
-
-               /// <summary>
+                /// <summary>
         /// Executes one complete generation of the Genetic Algorithm.
+        /// Selection → Crossover → Mutation → Evaluation.
         /// </summary>
         public void RunGeneration()
         {
             try
             {
+                var stopwatch = Stopwatch.StartNew();
+
                 var newPopulation = new List<SimulationState>();
 
                 for (int i = 0; i < _populationSize; i++)
@@ -293,6 +338,8 @@ namespace EcosystemSimulation.Services
                     var child = Crossover(parent1, parent2);
 
                     Mutate(child);
+
+                    child.Generation = _generationCounter + 1;
 
                     newPopulation.Add(child);
                 }
@@ -305,9 +352,20 @@ namespace EcosystemSimulation.Services
 
                 _generationCounter++;
 
+                stopwatch.Stop();
+
+                double averageFitness =
+                    _population.Average(Fitness);
+
+                double bestFitness =
+                    _population.Max(Fitness);
+
                 _logger.LogInformation(
-                    "Generation {Generation} completed successfully.",
-                    _generationCounter);
+                    "Generation {Generation} completed in {Time} ms | Avg Fitness = {Average:F2} | Best Fitness = {Best:F2}",
+                    _generationCounter,
+                    stopwatch.ElapsedMilliseconds,
+                    averageFitness,
+                    bestFitness);
 
                 PrintPopulation();
             }
@@ -320,7 +378,7 @@ namespace EcosystemSimulation.Services
         }
 
         /// <summary>
-        /// Prints the current population to the application log.
+        /// Logs every ecosystem state.
         /// </summary>
         private void PrintPopulation()
         {
@@ -329,7 +387,8 @@ namespace EcosystemSimulation.Services
                 foreach (var state in _population)
                 {
                     _logger.LogDebug(
-                        "Plants:{Plants} Herbivores:{Herbivores} Carnivores:{Carnivores} Fitness:{Fitness:F2}",
+                        "Generation:{Generation} Plants:{Plants} Herbivores:{Herbivores} Carnivores:{Carnivores} Fitness:{Fitness:F2}",
+                        state.Generation,
                         state.Plants,
                         state.Herbivores,
                         state.Carnivores,
@@ -339,7 +398,7 @@ namespace EcosystemSimulation.Services
         }
 
         /// <summary>
-        /// Resets the simulation.
+        /// Starts a fresh simulation.
         /// </summary>
         public void StartNewSimulation()
         {
@@ -347,11 +406,12 @@ namespace EcosystemSimulation.Services
 
             InitializePopulation();
 
-            _logger.LogInformation("Simulation restarted.");
+            _logger.LogInformation(
+                "Simulation restarted successfully.");
         }
 
         /// <summary>
-        /// Returns the best ecosystem state.
+        /// Returns the fittest ecosystem state.
         /// </summary>
         public SimulationState? GetBestState()
         {
@@ -360,8 +420,7 @@ namespace EcosystemSimulation.Services
                 lock (_lock)
                 {
                     return _population
-                        .OrderByDescending(Fitness)
-                        .FirstOrDefault()
+                        .MaxBy(Fitness)
                         ?.Clone();
                 }
             }
@@ -376,15 +435,44 @@ namespace EcosystemSimulation.Services
         }
 
         /// <summary>
-        /// Returns a snapshot of the current population.
+        /// Returns all ecosystem states.
         /// </summary>
         public IEnumerable<SimulationState> GetPopulation()
         {
             lock (_lock)
             {
                 return _population
-                    .Select(state => state.Clone())
+                    .Select(x => x.Clone())
                     .ToList();
+            }
+        }
+
+        /// <summary>
+        /// Returns simulation statistics.
+        /// Useful for dashboards and APIs.
+        /// </summary>
+        public object GetStatistics()
+        {
+            lock (_lock)
+            {
+                return new
+                {
+                    Generation = _generationCounter,
+
+                    PopulationSize = _population.Count,
+
+                    AverageFitness =
+                        _population.Any()
+                            ? _population.Average(Fitness)
+                            : 0,
+
+                    BestFitness =
+                        _population.Any()
+                            ? _population.Max(Fitness)
+                            : 0,
+
+                    BestState = GetBestState()
+                };
             }
         }
     }
