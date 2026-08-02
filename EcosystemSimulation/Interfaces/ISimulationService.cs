@@ -6,10 +6,14 @@ namespace EcosystemSimulation.Interfaces
     {
         void RunGeneration();
 
-        SimulationState GetBestState();
+        SimulationState? GetBestState();
 
         IEnumerable<SimulationState> GetPopulation();
 
         void StartNewSimulation();
+
+        object GetStatistics();
+
+        int Generation { get; }
     }
 }
