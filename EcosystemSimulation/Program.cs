@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
 // ------------------- Database -------------------
 
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -60,7 +61,8 @@ if (app.Environment.IsDevelopment())
     {
         options.SwaggerEndpoint(
             "/swagger/v1/swagger.json",
-            "Ecosystem Simulation API v1");
+            "Ecosystem Simulation API v1"
+        );
     });
 }
 
