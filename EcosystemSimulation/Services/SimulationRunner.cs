@@ -1,4 +1,4 @@
-using EcosystemSimulation.Models;
+using EcosystemSimulation.Interfaces;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -6,16 +6,21 @@ namespace EcosystemSimulation.Services
 {
     public class SimulationRunner : BackgroundService
     {
-        private readonly SimulationService _simulation;
+        private readonly ISimulationService _simulation;
         private readonly ILogger<SimulationRunner> _logger;
-        private readonly int _delayMs = 2000;
+        private readonly int _delayMs;
 
         public SimulationRunner(
-            SimulationService simulation,
+            ISimulationService simulation,
+            IConfiguration configuration,
             ILogger<SimulationRunner> logger)
         {
             _simulation = simulation ?? throw new ArgumentNullException(nameof(simulation));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
+            _delayMs = configuration.GetValue<int>(
+                "Simulation:SimulationDelay",
+                1000);
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -33,7 +38,8 @@ namespace EcosystemSimulation.Services
                     if (best != null)
                     {
                         _logger.LogInformation(
-                            "Generation completed | Plants: {Plants}, Herbivores: {Herbivores}, Carnivores: {Carnivores}, Fitness: {Fitness:F2}",
+                            "Generation {Generation} | Plants: {Plants} | Herbivores: {Herbivores} | Carnivores: {Carnivores} | Fitness: {Fitness:F2}",
+                            _simulation.Generation,
                             best.Plants,
                             best.Herbivores,
                             best.Carnivores,
@@ -49,7 +55,7 @@ namespace EcosystemSimulation.Services
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "An error occurred while running the simulation.");
+                    _logger.LogError(ex, "Error while running simulation.");
                 }
             }
 
