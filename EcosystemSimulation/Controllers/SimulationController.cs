@@ -19,9 +19,6 @@ public class SimulationController : ControllerBase
         _logger = logger;
     }
 
-    /// <summary>
-    /// Streams the best simulation state using Server-Sent Events (SSE).
-    /// </summary>
     [HttpGet("stream")]
     public async Task Stream()
     {
@@ -54,9 +51,6 @@ public class SimulationController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Returns the best ecosystem state.
-    /// </summary>
     [HttpGet("best")]
     public IActionResult GetBestState()
     {
@@ -68,27 +62,18 @@ public class SimulationController : ControllerBase
         return Ok(state);
     }
 
-    /// <summary>
-    /// Returns the current simulation population.
-    /// </summary>
     [HttpGet("population")]
     public IActionResult GetPopulation()
     {
         return Ok(_simulation.GetPopulation());
     }
 
-    /// <summary>
-    /// Returns simulation statistics.
-    /// </summary>
-    [HttpGet("stats")]
+    [HttpGet("statistics")]
     public IActionResult GetStatistics()
     {
         return Ok(_simulation.GetStatistics());
     }
 
-    /// <summary>
-    /// Restarts the simulation.
-    /// </summary>
     [HttpPost("restart")]
     public IActionResult Restart()
     {
@@ -102,9 +87,6 @@ public class SimulationController : ControllerBase
         });
     }
 
-    /// <summary>
-    /// Health endpoint.
-    /// </summary>
     [HttpGet("health")]
     public IActionResult Health()
     {
