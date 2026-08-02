@@ -1,41 +1,61 @@
-public class SimulationState
+namespace EcosystemSimulation.Models
 {
-    public int Id { get; set; }
-
-    public int Plants { get; set; }
-
-    public int Herbivores { get; set; }
-
-    public int Carnivores { get; set; }
-
-    public DateTime Timestamp { get; set; } = DateTime.UtcNow;
-
-    public int PlantGrowth { get; set; }
-    public int PlantConsumed { get; set; }
-
-    public int HerbivoreBirths { get; set; }
-    public int HerbivoreDeaths { get; set; }
-
-    public int CarnivoreBirths { get; set; }
-    public int CarnivoreDeaths { get; set; }
-
-    // Useful metric
-    public int TotalPopulation =>
-        Plants + Herbivores + Carnivores;
-
-    public double Fitness()
+    public class SimulationState
     {
-        double balance =
-            1.0 /
-            (1 +
-             Math.Abs(Plants - Herbivores) +
-             Math.Abs(Herbivores - Carnivores));
+        public int Id { get; set; }
 
-        return TotalPopulation * balance;
-    }
+        // Simulation metadata
+        public int Generation { get; set; }
 
-    public SimulationState Clone()
-    {
-        return (SimulationState)MemberwiseClone();
+        public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+
+        // Population
+        public int Plants { get; set; }
+
+        public int Herbivores { get; set; }
+
+        public int Carnivores { get; set; }
+
+        // Population changes
+        public int PlantGrowth { get; set; }
+
+        public int PlantConsumed { get; set; }
+
+        public int HerbivoreBirths { get; set; }
+
+        public int HerbivoreDeaths { get; set; }
+
+        public int CarnivoreBirths { get; set; }
+
+        public int CarnivoreDeaths { get; set; }
+
+        // Environmental Events
+        public bool DroughtOccurred { get; set; }
+
+        public bool HerbivoreBoomOccurred { get; set; }
+
+        // Analytics
+        public int TotalPopulation =>
+            Plants + Herbivores + Carnivores;
+
+        public double FitnessScore { get; set; }
+
+        public double Fitness()
+        {
+            double balance =
+                1.0 /
+                (1 +
+                 Math.Abs(Plants - Herbivores) +
+                 Math.Abs(Herbivores - Carnivores));
+
+            FitnessScore = TotalPopulation * balance;
+
+            return FitnessScore;
+        }
+
+        public SimulationState Clone()
+        {
+            return (SimulationState)MemberwiseClone();
+        }
     }
 }
