@@ -8,7 +8,7 @@ namespace EcosystemSimulation.Controllers;
 [Route("api/simulation")]
 public class SimulationController : ControllerBase
 {
-    private readonly SimulationService _simulation;
+    private readonly ISimulationService _simulation;
     private readonly ILogger<SimulationController> _logger;
 
     public SimulationController(
