@@ -3,7 +3,7 @@ using EcosystemSimulation.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // ------------------- Services -------------------
-builder.Services.AddSingleton<SimulationService>();
+builder.Services.AddSingleton<ISimulationService, SimulationService>();
 builder.Services.AddHostedService<SimulationRunner>();
 
 builder.Services.AddControllers();
