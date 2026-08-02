@@ -4,6 +4,8 @@ namespace EcosystemSimulation.Interfaces
 {
     public interface ISimulationService
     {
+        int Generation { get; }
+
         void RunGeneration();
 
         SimulationState? GetBestState();
@@ -14,6 +16,6 @@ namespace EcosystemSimulation.Interfaces
 
         object GetStatistics();
 
-        int Generation { get; }
+        double Fitness(SimulationState state);
     }
 }
