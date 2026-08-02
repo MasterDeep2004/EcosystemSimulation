@@ -1,17 +1,24 @@
-public class Entity
+using System.ComponentModel.DataAnnotations;
+
+namespace EcosystemSimulation.Models
 {
-    public int Id { get; set; }
-
-    public EntityType Type { get; set; }
-
-    public int Population { get; set; }
-
-    public double GrowthRate { get; set; }
-
-    public int ConsumptionRate { get; set; }
-
-    public override string ToString()
+    public class Entity
     {
-        return $"{Type}: {Population}";
+        [Key]
+        public int Id { get; set; }
+
+        public EntityType Type { get; set; }
+
+        public int Population { get; set; }
+
+        public double GrowthRate { get; set; }
+
+        public int ConsumptionRate { get; set; }
+
+
+        public override string ToString()
+        {
+            return $"{Type}: {Population}";
+        }
     }
 }
