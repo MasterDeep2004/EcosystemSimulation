@@ -1,4 +1,5 @@
 using EcosystemSimulation.Interfaces;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -38,24 +39,27 @@ namespace EcosystemSimulation.Services
                     if (best != null)
                     {
                         _logger.LogInformation(
-                            "Generation {Generation} | Plants: {Plants} | Herbivores: {Herbivores} | Carnivores: {Carnivores} | Fitness: {Fitness:F2}",
+                            "Generation {Generation} | Plants={Plants} | Herbivores={Herbivores} | Carnivores={Carnivores} | Fitness={Fitness:F2} | Event={Event}",
                             _simulation.Generation,
                             best.Plants,
                             best.Herbivores,
                             best.Carnivores,
-                            best.Fitness());
+                            _simulation.Fitness(best),
+                            string.IsNullOrWhiteSpace(best.EventName)
+                                ? "None"
+                                : best.EventName);
                     }
 
                     await Task.Delay(_delayMs, stoppingToken);
                 }
                 catch (TaskCanceledException)
                 {
-                    _logger.LogInformation("Simulation cancelled.");
+                    _logger.LogInformation("Simulation Runner cancelled.");
                     break;
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Error while running simulation.");
+                    _logger.LogError(ex, "Unexpected error while running simulation.");
                 }
             }
 
