@@ -1,13 +1,29 @@
 using EcosystemSimulation.Interfaces;
 using EcosystemSimulation.Services;
+using EcosystemSimulation.Data;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// ------------------- Database -------------------
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+{
+    options.UseMySql(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        ServerVersion.AutoDetect(
+            builder.Configuration.GetConnectionString("DefaultConnection")
+        )
+    );
+});
+
 
 // ------------------- Dependency Injection -------------------
 
 builder.Services.AddSingleton<ISimulationService, SimulationService>();
 
 builder.Services.AddHostedService<SimulationRunner>();
+
 
 // ------------------- MVC -------------------
 
@@ -16,6 +32,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen();
+
 
 // ------------------- CORS -------------------
 
@@ -29,7 +46,9 @@ builder.Services.AddCors(options =>
     });
 });
 
+
 var app = builder.Build();
+
 
 // ------------------- Middleware -------------------
 
@@ -45,15 +64,18 @@ if (app.Environment.IsDevelopment())
     });
 }
 
+
 app.UseStaticFiles();
 
 app.UseRouting();
 
 app.UseCors();
 
+
 app.MapControllers();
 
 app.MapFallbackToFile("index.html");
+
 
 // ------------------- Run -------------------
 
