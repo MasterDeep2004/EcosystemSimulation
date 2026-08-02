@@ -1,10 +1,15 @@
-public interface ISimulationService
+using EcosystemSimulation.Models;
+
+namespace EcosystemSimulation.Interfaces
 {
-    void RunGeneration();
+    public interface ISimulationService
+    {
+        void RunGeneration();
 
-    SimulationState? GetBestState();
+        SimulationState GetBestState();
 
-    IEnumerable<SimulationState> GetPopulation();
+        IEnumerable<SimulationState> GetPopulation();
 
-    void StartNewSimulation();
+        void StartNewSimulation();
+    }
 }
