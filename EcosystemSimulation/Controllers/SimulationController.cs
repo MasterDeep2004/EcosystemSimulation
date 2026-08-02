@@ -11,13 +11,10 @@ public class SimulationController : ControllerBase
     private readonly ISimulationService _simulation;
     private readonly ILogger<SimulationController> _logger;
 
-    public SimulationController(
-        SimulationService simulation,
-        ILogger<SimulationController> logger)
-    {
-        _simulation = simulation;
-        _logger = logger;
-    }
+    public SimulationController(ISimulationService simulation)
+{
+    _simulation = simulation;
+}
 
     [HttpGet("stream")]
     public async Task Stream()
