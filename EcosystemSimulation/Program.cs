@@ -1,24 +1,30 @@
-using EcosystemSimulation.Services;
-using EcosystemSimulation.Interfaces;
 using EcosystemSimulation.Data;
+using EcosystemSimulation.Interfaces;
+using EcosystemSimulation.Repositories;
+using EcosystemSimulation.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ------------------- Services -------------------
-
-builder.Services.AddSingleton<ISimulationService, SimulationService>();
-
-builder.Services.AddHostedService<SimulationRunner>();
+// ------------------- Database -------------------
 
 builder.Services.AddDbContext<SimulationDbContext>(options =>
 {
     options.UseMySql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
         ServerVersion.AutoDetect(
-            builder.Configuration.GetConnectionString("DefaultConnection"))
-    );
+            builder.Configuration.GetConnectionString("DefaultConnection")));
 });
+
+// ------------------- Dependency Injection -------------------
+
+builder.Services.AddSingleton<ISimulationService, SimulationService>();
+
+builder.Services.AddScoped<ISimulationRepository, SimulationRepository>();
+
+builder.Services.AddHostedService<SimulationRunner>();
+
+// ------------------- MVC -------------------
 
 builder.Services.AddControllers();
 
@@ -39,6 +45,15 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+// ------------------- Apply Database Migration -------------------
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<SimulationDbContext>();
+
+    db.Database.Migrate();
+}
 
 // ------------------- Middleware -------------------
 
@@ -62,7 +77,6 @@ app.UseCors();
 
 app.MapControllers();
 
-// Default page
 app.MapFallbackToFile("index.html");
 
 // ------------------- Run -------------------
