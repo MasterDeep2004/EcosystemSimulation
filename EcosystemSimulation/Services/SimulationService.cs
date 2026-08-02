@@ -8,7 +8,7 @@ namespace EcosystemSimulation.Services
     /// Runs the ecosystem simulation using
     /// Genetic Algorithm + Lotka Volterra population model.
     /// </summary>
-    public class SimulationService
+    public class SimulationService : ISimulationService
     {
         private int _generationCounter = 0;
 
