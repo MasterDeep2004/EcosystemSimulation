@@ -2,6 +2,8 @@ const canvas = document.getElementById("ecosystemCanvas");
 const ctx = canvas.getContext("2d");
 
 const status = document.getElementById("status");
+const generation = document.getElementById("generation");
+const eventName = document.getElementById("event");
 
 const source = new EventSource("/api/simulation/stream");
 
@@ -10,39 +12,88 @@ source.onopen = () => {
 };
 
 source.onmessage = event => {
-
     const data = JSON.parse(event.data);
 
-    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
 
-    const baseY = 400;
+    generation.innerText =
+        `Generation: ${data.Generation}`;
 
-    drawBar(120,data.Plants*0.15, "green","Plants",data.Plants);
+    eventName.innerText =
+        data.EventName
+            ? `Event: ${data.EventName}`
+            : "Event: None";
 
-    drawBar(400,data.Herbivores*0.4,"orange","Herbivores",data.Herbivores);
+    drawBar(
+        120,
+        data.Plants * 0.15,
+        "green",
+        "Plants",
+        data.Plants
+    );
 
-    drawBar(680,data.Carnivores*2,"red","Carnivores",data.Carnivores);
+    drawBar(
+        400,
+        data.Herbivores * 0.4,
+        "orange",
+        "Herbivores",
+        data.Herbivores
+    );
+
+    drawBar(
+        680,
+        data.Carnivores * 2,
+        "red",
+        "Carnivores",
+        data.Carnivores
+    );
 };
 
-function drawBar(x,height,color,label,value){
 
-    ctx.fillStyle=color;
+function drawBar(
+    x,
+    height,
+    color,
+    label,
+    value
+) {
+    const baseY = 400;
 
-    ctx.fillRect(x,400-height,120,height);
+    ctx.fillStyle = color;
 
-    ctx.fillStyle="white";
+    ctx.fillRect(
+        x,
+        baseY - height,
+        120,
+        height
+    );
 
-    ctx.font="18px Arial";
+    ctx.fillStyle = "white";
 
-    ctx.fillText(label,x+10,430);
+    ctx.font = "18px Arial";
 
-    ctx.fillText(value,x+20,380-height);
+    ctx.fillText(
+        label,
+        x + 10,
+        430
+    );
+
+    ctx.fillText(
+        value,
+        x + 20,
+        Math.max(30, baseY - height - 10)
+    );
 }
 
-source.onerror = ()=>{
 
-    status.innerText="Connection Lost";
+source.onerror = () => {
+    status.innerText =
+        "Connection Lost";
 
     source.close();
-
 };
