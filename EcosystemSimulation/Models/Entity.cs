@@ -15,7 +15,6 @@ namespace EcosystemSimulation.Models
 
         public int ConsumptionRate { get; set; }
 
-
         public override string ToString()
         {
             return $"{Type}: {Population}";
