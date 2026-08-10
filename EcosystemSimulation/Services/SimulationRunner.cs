@@ -16,17 +16,27 @@ namespace EcosystemSimulation.Services
             IConfiguration configuration,
             ILogger<SimulationRunner> logger)
         {
-            _simulation = simulation ?? throw new ArgumentNullException(nameof(simulation));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _simulation =
+                simulation ??
+                throw new ArgumentNullException(
+                    nameof(simulation));
 
-            _delayMs = configuration.GetValue<int>(
-                "Simulation:SimulationDelay",
-                1000);
+            _logger =
+                logger ??
+                throw new ArgumentNullException(
+                    nameof(logger));
+
+            _delayMs =
+                configuration.GetValue<int>(
+                    "Simulation:SimulationDelay",
+                    1000);
         }
 
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        protected override async Task ExecuteAsync(
+            CancellationToken stoppingToken)
         {
-            _logger.LogInformation("Simulation Runner started.");
+            _logger.LogInformation(
+                "Simulation Runner started.");
 
             while (!stoppingToken.IsCancellationRequested)
             {
@@ -34,7 +44,8 @@ namespace EcosystemSimulation.Services
                 {
                     _simulation.RunGeneration();
 
-                    var best = _simulation.GetBestState();
+                    var best =
+                        _simulation.GetBestState();
 
                     if (best != null)
                     {
@@ -45,25 +56,33 @@ namespace EcosystemSimulation.Services
                             best.Herbivores,
                             best.Carnivores,
                             _simulation.Fitness(best),
-                            string.IsNullOrWhiteSpace(best.EventName)
+                            string.IsNullOrWhiteSpace(
+                                best.EventName)
                                 ? "None"
                                 : best.EventName);
                     }
 
-                    await Task.Delay(_delayMs, stoppingToken);
+                    await Task.Delay(
+                        _delayMs,
+                        stoppingToken);
                 }
                 catch (TaskCanceledException)
                 {
-                    _logger.LogInformation("Simulation Runner cancelled.");
+                    _logger.LogInformation(
+                        "Simulation Runner cancelled.");
+
                     break;
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Unexpected error while running simulation.");
+                    _logger.LogError(
+                        ex,
+                        "Unexpected error while running simulation.");
                 }
             }
 
-            _logger.LogInformation("Simulation Runner stopped.");
+            _logger.LogInformation(
+                "Simulation Runner stopped.");
         }
     }
 }
