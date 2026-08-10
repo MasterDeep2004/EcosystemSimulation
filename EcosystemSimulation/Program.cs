@@ -2,31 +2,65 @@ using EcosystemSimulation.Data;
 using EcosystemSimulation.Interfaces;
 using EcosystemSimulation.Services;
 using Microsoft.EntityFrameworkCore;
+using OpenAI.Responses;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // ==================================================
-// Database
+// Configuration
 // ==================================================
 
 var connectionString =
     builder.Configuration.GetConnectionString("DefaultConnection");
 
-builder.Services.AddDbContext<AppDbContext>(options =>
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException(
+        "DefaultConnection was not found.");
+}
+
+// ==================================================
+// Database
+// ==================================================
+
+builder.Services.AddDbContextFactory<AppDbContext>(options =>
 {
     options.UseMySql(
         connectionString,
-        ServerVersion.AutoDetect(connectionString)
-    );
+        ServerVersion.AutoDetect(connectionString));
 });
 
 // ==================================================
-// Dependency Injection
+// Repository
 // ==================================================
 
-builder.Services.AddSingleton<ISimulationService, SimulationService>();
+builder.Services.AddScoped<ISimulationRepository,
+    SimulationRepository>();
+
+// ==================================================
+// Simulation
+// ==================================================
+
+builder.Services.AddSingleton<ISimulationService,
+    SimulationService>();
 
 builder.Services.AddHostedService<SimulationRunner>();
+
+// ==================================================
+// AI
+// ==================================================
+
+var openAiKey =
+    builder.Configuration["OpenAI:ApiKey"];
+
+if (!string.IsNullOrWhiteSpace(openAiKey))
+{
+    builder.Services.AddSingleton(
+        new ResponsesClient(openAiKey));
+
+    builder.Services.AddScoped<IAIAnalysisService,
+        AIAnalysisService>();
+}
 
 // ==================================================
 // MVC
@@ -60,7 +94,7 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 // ==================================================
-// Middleware
+// Swagger
 // ==================================================
 
 if (app.Environment.IsDevelopment())
@@ -71,10 +105,13 @@ if (app.Environment.IsDevelopment())
     {
         options.SwaggerEndpoint(
             "/swagger/v1/swagger.json",
-            "Ecosystem Simulation API v1"
-        );
+            "Ecosystem Simulation API v1");
     });
 }
+
+// ==================================================
+// Middleware
+// ==================================================
 
 app.UseStaticFiles();
 
