@@ -1,32 +1,36 @@
+using EcosystemSimulation.Data;
 using EcosystemSimulation.Interfaces;
 using EcosystemSimulation.Services;
-using EcosystemSimulation.Data;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// ==================================================
+// Database
+// ==================================================
 
-// ------------------- Database -------------------
+var connectionString =
+    builder.Configuration.GetConnectionString("DefaultConnection");
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
     options.UseMySql(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
-        ServerVersion.AutoDetect(
-            builder.Configuration.GetConnectionString("DefaultConnection")
-        )
+        connectionString,
+        ServerVersion.AutoDetect(connectionString)
     );
 });
 
-
-// ------------------- Dependency Injection -------------------
+// ==================================================
+// Dependency Injection
+// ==================================================
 
 builder.Services.AddSingleton<ISimulationService, SimulationService>();
 
 builder.Services.AddHostedService<SimulationRunner>();
 
-
-// ------------------- MVC -------------------
+// ==================================================
+// MVC
+// ==================================================
 
 builder.Services.AddControllers();
 
@@ -34,24 +38,30 @@ builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen();
 
-
-// ------------------- CORS -------------------
+// ==================================================
+// CORS
+// ==================================================
 
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.AllowAnyOrigin()
-              .AllowAnyHeader()
-              .AllowAnyMethod();
+        policy
+            .AllowAnyOrigin()
+            .AllowAnyHeader()
+            .AllowAnyMethod();
     });
 });
 
+// ==================================================
+// Build
+// ==================================================
 
 var app = builder.Build();
 
-
-// ------------------- Middleware -------------------
+// ==================================================
+// Middleware
+// ==================================================
 
 if (app.Environment.IsDevelopment())
 {
@@ -66,19 +76,18 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-
 app.UseStaticFiles();
 
 app.UseRouting();
 
 app.UseCors();
 
-
 app.MapControllers();
 
 app.MapFallbackToFile("index.html");
 
-
-// ------------------- Run -------------------
+// ==================================================
+// Run
+// ==================================================
 
 app.Run();
