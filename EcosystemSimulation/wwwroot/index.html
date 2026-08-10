@@ -2,7 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
     <title>Ecosystem Simulation Dashboard</title>
 
     <link rel="stylesheet" href="style.css">
@@ -10,24 +14,40 @@
 
 <body>
 
-<div class="container">
+    <div class="container">
 
-    <h1>🌍 Ecosystem Simulation Dashboard</h1>
+        <h1>
+            🌍 Ecosystem Simulation Dashboard
+        </h1>
 
-    <p class="subtitle">
-        Real-time predator–prey ecosystem using Genetic Algorithm and
-        Lotka–Volterra population dynamics.
-    </p>
+        <p class="subtitle">
+            Real-time predator-prey ecosystem using
+            genetic algorithms and population dynamics.
+        </p>
 
-    <canvas id="ecosystemCanvas" width="900" height="450"></canvas>
+        <div class="info">
+            <span id="generation">
+                Generation: 0
+            </span>
 
-    <div id="status">
-        Connecting...
+            <span id="event">
+                Event: None
+            </span>
+        </div>
+
+        <canvas
+            id="ecosystemCanvas"
+            width="900"
+            height="450">
+        </canvas>
+
+        <div id="status">
+            Connecting...
+        </div>
+
     </div>
 
-</div>
-
-<script src="simulation.js"></script>
+    <script src="app.js"></script>
 
 </body>
 </html>
