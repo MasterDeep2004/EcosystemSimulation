@@ -53,7 +53,7 @@ coverage/
 logs/
 
 ####################################################
-# Visual Studio Code / Rider
+# VS Code / Rider
 ####################################################
 
 .vscode/
@@ -66,7 +66,7 @@ logs/
 docker-compose.override.yml
 
 ####################################################
-# Node.js (if frontend tooling is added)
+# Node
 ####################################################
 
 node_modules/
@@ -85,11 +85,3 @@ node_modules/
 Thumbs.db
 Desktop.ini
 .DS_Store
-
-####################################################
-# Temporary Files
-####################################################
-
-*.tmp
-*.cache
-*.bak
